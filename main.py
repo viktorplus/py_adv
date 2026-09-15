@@ -22,14 +22,14 @@ with Session() as session:
     if smartphone is not None:
         smartphone.price = Decimal("349.99")
         session.commit()
-        print("\nОбновлённая цена товара 'Смартфон': 349.99")
+        print(f"\nОбновлённая цена товара 'Смартфон': {smartphone.price}")
 
     # Задача 4: Агрегация и группировка
     # Используя агрегирующие функции и группировку, подсчитайте общее количество продуктов в каждой категории.
     counts = session.execute(select(Category.name, func
         .count(Product.id)
         .label("total_products"))
-        .join(Product, Product.category_id == Category.id)
+        .outerjoin(Product, Product.category_id == Category.id)
         .group_by(Category.id, Category.name)
     ).all()
 
