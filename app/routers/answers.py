@@ -38,14 +38,14 @@ def create_answer(question_id: int):
     if question is None:
         return error
 
-    payload = request.get_json()
+    payload = request.get_json(silent=True)
     if payload is None:
-        return error_message(f'Payload is empty', 400)
+        return error_message('Invalid or missing JSON body', 400)
 
     try:
         answer = AnswerCreate.model_validate(payload)
     except ValidationError as e:
-        return validation_error_response(e)
+        return validation_error_response(e, 422)
 
     answer = Answer(question_id=question_id, is_agree=answer.is_agree)
     db.session.add(answer)

@@ -8,6 +8,8 @@ from app.schemas.questions import (
     QuestionUpdate,
     QuestionsList,
 )
+from app.schemas.errors import error_message, validation_error_response
+from .utils import _get_object_or_404
 
 
 questions_bp = Blueprint(
@@ -15,20 +17,6 @@ questions_bp = Blueprint(
     __name__,
     url_prefix="/questions",
 )
-
-
-def _get_question_or_404(question_id: int):
-    question = db.session.get(Question, question_id)
-
-    if question is None:
-        return None, (
-            jsonify({
-                "error": f"Question with id={question_id} not found"
-            }),
-            404,
-        )
-
-    return question, None
 
 
 @questions_bp.route("", methods=["GET"])
@@ -47,17 +35,12 @@ def create_question():
     payload = request.get_json(silent=True)
 
     if payload is None:
-        return jsonify({
-            "error": "Invalid or missing JSON body"
-        }), 400
+        return error_message("Invalid or missing JSON body", 400)
 
     try:
         question_in = QuestionCreate.model_validate(payload)
     except ValidationError as exc:
-        return jsonify({
-            "error": "Validation error",
-            "messages": exc.errors(),
-        }), 422
+        return validation_error_response(exc, 422)
 
     question = Question(text=question_in.text)
     db.session.add(question)
@@ -71,7 +54,7 @@ def create_question():
 @questions_bp.route("/<int:question_id>", methods=["GET"])
 def get_question(question_id: int):
     """Получение конкретного вопроса по ID."""
-    question, error = _get_question_or_404(question_id)
+    question, error = _get_object_or_404(Question, question_id)
 
     if error:
         return error
@@ -84,7 +67,7 @@ def get_question(question_id: int):
 @questions_bp.route("/<int:question_id>", methods=["PUT"])
 def update_question(question_id: int):
     """Обновление конкретного вопроса по ID."""
-    question, error = _get_question_or_404(question_id)
+    question, error = _get_object_or_404(Question, question_id)
 
     if error:
         return error
@@ -92,17 +75,12 @@ def update_question(question_id: int):
     payload = request.get_json(silent=True)
 
     if payload is None:
-        return jsonify({
-            "error": "Invalid or missing JSON body"
-        }), 400
+        return error_message("Invalid or missing JSON body", 400)
 
     try:
         question_in = QuestionUpdate.model_validate(payload)
     except ValidationError as exc:
-        return jsonify({
-            "error": "Validation error",
-            "details": exc.errors(),
-        }), 422
+        return validation_error_response(exc, 422)
 
     question.text = question_in.text
 
@@ -116,7 +94,7 @@ def update_question(question_id: int):
 @questions_bp.route("/<int:question_id>", methods=["DELETE"])
 def delete_question(question_id: int):
     """Удаление конкретного вопроса по ID."""
-    question, error = _get_question_or_404(question_id)
+    question, error = _get_object_or_404(Question, question_id)
 
     if error:
         return error

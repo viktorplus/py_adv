@@ -7,7 +7,7 @@ class ErrorResponse(BaseModel):
     details: list = []
 
 def error_message(message: str, status_code: int, details: list | None = None):
-    payload = ErrorResponse(error=message, details=details)
+    payload = ErrorResponse(error=message, details=details or [])
     return jsonify(payload.model_dump()), status_code
 
 
