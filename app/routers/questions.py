@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify, request
 from pydantic import ValidationError
 
-from app.models import db, Question
+from app.models import db, Question, Category
 from app.schemas.questions import (
     QuestionCreate,
     QuestionRead,
@@ -25,7 +25,7 @@ def get_questions():
     questions = db.session.scalars(
         db.select(Question)
     ).all()
-    result = QuestionsList.dump_python(questions)
+    result = QuestionsList.dump_python(QuestionsList.validate_python(questions))
     return jsonify(result), 200
 
 
@@ -43,6 +43,14 @@ def create_question():
         return validation_error_response(exc, 422)
 
     question = Question(text=question_in.text)
+
+    if question_in.category is not None:
+        name = question_in.category.name
+        category = db.session.scalar(
+            db.select(Category).where(Category.name == name)
+        )
+        question.category = category or Category(name=name)
+
     db.session.add(question)
     db.session.commit()
 
