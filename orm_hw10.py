@@ -72,9 +72,9 @@ overdue_subtasks = SubTask.objects.filter(status="Done", updated_at__gt=F("deadl
 print (overdue_subtasks)
 
 # Вывести все подзадачи, у которых статус "Done", но срок выполнения истек.
-overdue_subtasks_list = SubTask.objects.filter(status="Done", updated_at__gt=F("deadline"))
+overdue_subtasks_list = SubTask.objects.filter(status="Done", updated_at__gt=F("deadline")).all()
 for subtask in overdue_subtasks_list:
-    print(f"SubTask: {subtask.title}, Status: {subtask.status}, Deadline: {subtask.deadline}")
+    print(subtask)
 
 # Изменение записей:
 # Измените статус "Prepare presentation" на "In progress".
