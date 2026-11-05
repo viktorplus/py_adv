@@ -5,9 +5,10 @@ from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
-from apps.taskmanager.models import Task
-from apps.taskmanager.serializers import TaskCreateSerializer
+from apps.taskmanager.models import Task, SubTask
+from apps.taskmanager.serializers import TaskCreateSerializer, SubTaskCreateSerializer, TaskDetailSerializer
 
 
 # @api_view(['GET'])
@@ -33,7 +34,7 @@ def task_detail(request, task_id):
     task = get_object_or_404(Task, id=task_id)
 
     if request.method == 'GET':
-        serializer = TaskCreateSerializer(task)
+        serializer = TaskDetailSerializer(task)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     if request.method in ['PUT', 'PATCH']:
@@ -58,3 +59,47 @@ def task_stats(request):
         "deadline_passed_tasks": deadline_passed_tasks
     }
     return Response(result, status=status.HTTP_200_OK)
+
+
+class SubTaskListCreateView(APIView):
+    def get(self, request):
+        subtasks = SubTask.objects.all()
+        serializer = SubTaskCreateSerializer(subtasks, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def post(self, request):
+        serializer = SubTaskCreateSerializer(data=request.data, many=isinstance(request.data, list))
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class SubTaskDetailUpdateDeleteView(APIView):
+    def get_object(self, subtask_id):
+        return get_object_or_404(SubTask, id=subtask_id)
+
+    def get(self, request, subtask_id):
+        subtask = self.get_object(subtask_id)
+        serializer = SubTaskCreateSerializer(subtask)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def put(self, request, subtask_id):
+        subtask = self.get_object(subtask_id)
+        serializer = SubTaskCreateSerializer(subtask, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def patch(self, request, subtask_id):
+        subtask = self.get_object(subtask_id)
+        serializer = SubTaskCreateSerializer(subtask, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, subtask_id):
+        subtask = self.get_object(subtask_id)
+        subtask.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
