@@ -1,14 +1,14 @@
-from datetime import datetime
-from unittest import result
-
 from django.db import models
 from django.utils import timezone
+
 from rest_framework import status
 from rest_framework.decorators import api_view
+from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
+
 from apps.taskmanager.models import Task
 from apps.taskmanager.serializers import TaskCreateSerializer
-from rest_framework.generics import get_object_or_404
+
 
 # @api_view(['GET'])
 # def hello_world(request):
