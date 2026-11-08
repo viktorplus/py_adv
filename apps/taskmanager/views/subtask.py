@@ -1,14 +1,13 @@
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
-from rest_framework.pagination import PageNumberPagination
-
 from apps.taskmanager.models import SubTask
+from apps.taskmanager.pagination import CreatedAtCursorPagination
 from apps.taskmanager.serializers import SubTaskCreateSerializer
 from apps.taskmanager.views.mixins import BulkCreateMixin
 
 
-class SubTaskPagination(PageNumberPagination):
+class SubTaskPagination(CreatedAtCursorPagination):
     page_size = 5
 
 

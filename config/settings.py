@@ -126,3 +126,68 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+REST_FRAMEWORK = {
+    # Cursor pagination: opaque ?cursor= token instead of page numbers / offsets in the URL
+    'DEFAULT_PAGINATION_CLASS': 'apps.taskmanager.pagination.CreatedAtCursorPagination',
+    'PAGE_SIZE': 6,
+}
+
+LOGS_DIR = BASE_DIR / 'logs'
+LOGS_DIR.mkdir(exist_ok=True)
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{asctime} {levelname} {name} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+        'http_file': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': LOGS_DIR / 'http_logs.log',
+            'formatter': 'verbose',
+            'encoding': 'utf-8',
+        },
+        'db_file': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': LOGS_DIR / 'db_logs.log',
+            'formatter': 'verbose',
+            'encoding': 'utf-8',
+        },
+    },
+    'loggers': {
+        # Server work (startup, autoreload, warnings, errors) -> console
+        'django': {
+            'handlers': ['console'],
+            'level': 'INFO',
+        },
+        # One line per HTTP request with its status code (runserver) -> console + logs/http_logs.log
+        'django.server': {
+            'handlers': ['console', 'http_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        # 4xx/5xx details incl. tracebacks -> logs/http_logs.log (console already gets them via 'django')
+        'django.request': {
+            'handlers': ['http_file'],
+            'level': 'WARNING',
+        },
+        # SQL queries (emitted only when DEBUG = True) -> logs/db_logs.log only
+        'django.db.backends': {
+            'handlers': ['db_file'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+    },
+}
