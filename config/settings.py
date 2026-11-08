@@ -153,17 +153,22 @@ LOGGING = {
         },
         'http_file': {
             'level': 'INFO',
-            'class': 'logging.FileHandler',
+            # 'class': 'logging.FileHandler',
+            'class': 'logging.handlers.RotatingFileHandler',
             'filename': LOGS_DIR / 'http_logs.log',
             'formatter': 'verbose',
             'encoding': 'utf-8',
+            'maxBytes': 1024 * 1024 * 5,  # 5 MB
+            'backupCount': 5,
         },
         'db_file': {
             'level': 'DEBUG',
-            'class': 'logging.FileHandler',
+            'class': 'logging.handlers.RotatingFileHandler',
             'filename': LOGS_DIR / 'db_logs.log',
             'formatter': 'verbose',
             'encoding': 'utf-8',
+            'maxBytes': 1024 * 1024 * 5,  # 5 MB
+            'backupCount': 5,
         },
     },
     'loggers': {
@@ -185,7 +190,7 @@ LOGGING = {
         },
         # SQL queries (emitted only when DEBUG = True) -> logs/db_logs.log only
         'django.db.backends': {
-            'handlers': ['db_file'],
+            'handlers': ['db_file', 'console', 'http_file'],
             'level': 'DEBUG',
             'propagate': False,
         },
