@@ -1,24 +1,21 @@
 from django.db import models
 from django.utils import timezone
 
-from rest_framework import status
-from rest_framework.generics import get_object_or_404
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import filters, status
+from rest_framework.exceptions import ValidationError
+from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.taskmanager.models import Task
 from apps.taskmanager.serializers import TaskCreateSerializer, TaskDetailSerializer
+from apps.taskmanager.views.mixins import BulkCreateMixin
 
 
 # @api_view(['GET'])
 # def hello_world(request):
 #     return Response({"message": "Hello, World!"})
-"""Задание 1:
-Написать, или обновить, если уже есть, эндпоинт на получение списка всех задач по дню недели.
-Если никакой параметр запроса не передавался - по умолчанию выводить все записи.
-Если был передан день недели (например вторник) - выводить список задач только на этот день недели.
-
-чтобы клиент сам выбирал, по какому полю фильтровать, deadline или created_at."""
 
 # Django week_day lookup: Sunday=1 ... Saturday=7
 DAYS_OF_WEEK = {
@@ -33,53 +30,36 @@ DAYS_OF_WEEK = {
 DATE_FIELDS = ('deadline', 'created_at')
 
 
-class TaskListCreateView(APIView):
-    def get(self, request):
-        tasks = Task.objects.all()
-        day_of_week = request.query_params.get('day_of_week')
+class TaskListCreateView(BulkCreateMixin, ListCreateAPIView):
+    queryset = Task.objects.all()
+    serializer_class = TaskCreateSerializer
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_fields = ['status', 'deadline']
+    search_fields = ['title', 'description']
+    ordering_fields = ['created_at']
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        day_of_week = self.request.query_params.get('day_of_week')
         if day_of_week:
             day_number = DAYS_OF_WEEK.get(day_of_week.lower())
             if day_number is None:
-                return Response({"error": "Invalid day of week"}, status=status.HTTP_400_BAD_REQUEST)
-            date_field = request.query_params.get('date_field', 'deadline')
+                raise ValidationError({"error": "Invalid day of week"})
+            date_field = self.request.query_params.get('date_field', 'deadline')
             if date_field not in DATE_FIELDS:
-                return Response({"error": f"date_field must be one of {DATE_FIELDS}"},
-                                status=status.HTTP_400_BAD_REQUEST)
-            tasks = tasks.filter(**{f'{date_field}__week_day': day_number})
-        serializer = TaskCreateSerializer(tasks, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+                raise ValidationError({"error": f"date_field must be one of {DATE_FIELDS}"})
+            queryset = queryset.filter(**{f'{date_field}__week_day': day_number})
+        return queryset
 
-    def post(self, request):
-        serializer = TaskCreateSerializer(data=request.data, many=isinstance(request.data, list))
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class TaskDetailUpdateDeleteView(APIView):
-    def get(self, request, task_id):
-        task = get_object_or_404(Task, id=task_id)
-        serializer = TaskDetailSerializer(task)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+class TaskDetailUpdateDeleteView(RetrieveUpdateDestroyAPIView):
+    queryset = Task.objects.all()
+    lookup_url_kwarg = 'task_id'
 
-    def put(self, request, task_id):
-        return self._update(request, task_id, partial=False)
-
-    def patch(self, request, task_id):
-        return self._update(request, task_id, partial=True)
-
-    def delete(self, request, task_id):
-        task = get_object_or_404(Task, id=task_id)
-        task.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
-    def _update(self, request, task_id, partial):
-        task = get_object_or_404(Task, id=task_id)
-        serializer = TaskCreateSerializer(task, data=request.data, partial=partial)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    def get_serializer_class(self):
+        if self.request.method == 'GET':
+            return TaskDetailSerializer
+        return TaskCreateSerializer
 
 
 class TaskStatsView(APIView):
