@@ -190,7 +190,7 @@ LOGGING = {
         },
         # SQL queries (emitted only when DEBUG = True) -> logs/db_logs.log only
         'django.db.backends': {
-            'handlers': ['db_file', 'console', 'http_file'],
+            'handlers': ['db_file'],
             'level': 'DEBUG',
             'propagate': False,
         },
