@@ -1,5 +1,7 @@
 from django.db.models import Count
 from rest_framework.decorators import action
+from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
+
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
@@ -10,6 +12,16 @@ from apps.taskmanager.serializers import CategoryCreateSerializer
 class CategoryViewSet(ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategoryCreateSerializer
+
+    def get_permissions(self):
+        if self.action in ('list', 'retrieve'):
+            permission_classes = [AllowAny]
+        elif self.action == 'count_tasks':
+            permission_classes = [IsAuthenticated]
+        else:
+            permission_classes = [IsAdminUser]
+
+        return [permission() for permission in permission_classes]
 
     @action(detail=False, methods=['get'])
     def count_tasks(self, request):

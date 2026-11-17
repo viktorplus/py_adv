@@ -1,16 +1,22 @@
 from django.db import models
+from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
+
 from django.utils import timezone
 
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, status
 from rest_framework.exceptions import ValidationError
-from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
+
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 
 from apps.taskmanager.models import Task
 from apps.taskmanager.serializers import TaskCreateSerializer, TaskDetailSerializer
 from apps.taskmanager.views.mixins import BulkCreateMixin
+
+from apps.taskmanager.permissions import IsAdminOrReadOnly
+
 
 
 # @api_view(['GET'])
@@ -31,6 +37,8 @@ DATE_FIELDS = ('deadline', 'created_at')
 
 
 class TaskListCreateView(BulkCreateMixin, ListCreateAPIView):
+    permission_classes = [IsAuthenticated]
+
     queryset = Task.objects.all()
     serializer_class = TaskCreateSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
@@ -53,6 +61,8 @@ class TaskListCreateView(BulkCreateMixin, ListCreateAPIView):
 
 
 class TaskDetailUpdateDeleteView(RetrieveUpdateDestroyAPIView):
+    permission_classes = [IsAuthenticated, IsAdminOrReadOnly]
+
     queryset = Task.objects.all()
     lookup_url_kwarg = 'task_id'
 
@@ -63,6 +73,8 @@ class TaskDetailUpdateDeleteView(RetrieveUpdateDestroyAPIView):
 
 
 class TaskStatsView(APIView):
+    permission_classes = [IsAdminUser]
+
     def get(self, request):
         by_status = Task.objects.values('status').annotate(total=models.Count('id'))
         count_all_tasks = Task.objects.count()

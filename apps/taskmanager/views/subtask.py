@@ -2,19 +2,17 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
 from apps.taskmanager.models import SubTask
-from apps.taskmanager.pagination import CreatedAtCursorPagination
 from apps.taskmanager.serializers import SubTaskCreateSerializer
 from apps.taskmanager.views.mixins import BulkCreateMixin
-
-
-class SubTaskPagination(CreatedAtCursorPagination):
-    page_size = 5
+from rest_framework.permissions import IsAuthenticated
+from apps.taskmanager.permissions import IsAdminOrReadOnly
 
 
 class SubTaskListCreateView(BulkCreateMixin, ListCreateAPIView):
+    permission_classes = [IsAuthenticated]
+
     queryset = SubTask.objects.all()
     serializer_class = SubTaskCreateSerializer
-    pagination_class = SubTaskPagination
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ['status', 'deadline']
     search_fields = ['title', 'description']
@@ -30,6 +28,8 @@ class SubTaskListCreateView(BulkCreateMixin, ListCreateAPIView):
 
 
 class SubTaskDetailUpdateDeleteView(RetrieveUpdateDestroyAPIView):
+    permission_classes = [IsAuthenticated, IsAdminOrReadOnly]
+
     queryset = SubTask.objects.all()
     serializer_class = SubTaskCreateSerializer
     lookup_url_kwarg = 'subtask_id'
