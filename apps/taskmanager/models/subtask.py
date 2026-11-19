@@ -1,8 +1,7 @@
+from django.conf import settings
 from django.db import models
-
 from apps.taskmanager.models.base import TimeStampedModel, get_status_choices
 from apps.taskmanager.models.task import Task
-
 
 class SubTask(TimeStampedModel):
     title = models.CharField(max_length=255)
@@ -10,6 +9,7 @@ class SubTask(TimeStampedModel):
     task = models.ForeignKey(Task, on_delete=models.CASCADE, related_name='subtasks')
     status = models.CharField(max_length=20, choices=get_status_choices(), default='New')
     deadline = models.DateTimeField()
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name='subtasks')
 
     def __str__(self):
         return self.title

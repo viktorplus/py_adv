@@ -26,6 +26,9 @@ class SubTaskListCreateView(BulkCreateMixin, ListCreateAPIView):
             queryset = queryset.filter(task__title__iexact=task_title)
         return queryset
 
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)
+
 
 class SubTaskDetailUpdateDeleteView(RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAuthenticated, IsAdminOrReadOnly]

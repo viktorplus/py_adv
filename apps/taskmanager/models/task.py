@@ -1,7 +1,6 @@
+from django.conf import settings
 from django.db import models
-
 from apps.taskmanager.models.base import TimeStampedModel, get_status_choices
-
 
 class Task(TimeStampedModel):
     # title = models.CharField(max_length=255, unique_for_date='deadline')
@@ -10,6 +9,7 @@ class Task(TimeStampedModel):
     categories = models.ManyToManyField('Category', related_name='tasks')
     status = models.CharField(max_length=20, choices=get_status_choices(), default='New')
     deadline = models.DateTimeField()
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name='tasks')
 
     def __str__(self):
         return self.title

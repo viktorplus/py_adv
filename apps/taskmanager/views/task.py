@@ -1,5 +1,5 @@
 from django.db import models
-from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
+from rest_framework.generics import ListAPIView, ListCreateAPIView, RetrieveUpdateDestroyAPIView
 
 from django.utils import timezone
 
@@ -59,6 +59,16 @@ class TaskListCreateView(BulkCreateMixin, ListCreateAPIView):
             queryset = queryset.filter(**{f'{date_field}__week_day': day_number})
         return queryset
 
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)
+
+
+class MyTaskListView(ListAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = TaskCreateSerializer
+
+    def get_queryset(self):
+        return Task.objects.filter(owner=self.request.user)
 
 class TaskDetailUpdateDeleteView(RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAuthenticated, IsAdminOrReadOnly]

@@ -6,10 +6,11 @@ from apps.taskmanager.serializers.subtask import SubTaskSerializer
 
 
 class TaskCreateSerializer(serializers.ModelSerializer):
+    owner = serializers.SlugRelatedField(slug_field='username', read_only=True)
 
     class Meta:
         model = Task
-        fields = ('id', 'title', 'description', 'status', 'deadline')
+        fields = ('id', 'title', 'description', 'status', 'deadline', 'owner')
 
     def validate_deadline(self, value):
         if value < timezone.now():
@@ -19,7 +20,8 @@ class TaskCreateSerializer(serializers.ModelSerializer):
 
 class TaskDetailSerializer(serializers.ModelSerializer):
     subtasks = SubTaskSerializer(many=True, read_only=True)
+    owner = serializers.SlugRelatedField(slug_field='username', read_only=True)
 
     class Meta:
         model = Task
-        fields = ('id', 'title', 'description', 'status', 'deadline', 'created_at', 'updated_at', 'subtasks')
+        fields = ('id', 'title', 'description', 'status', 'deadline', 'created_at', 'updated_at', 'subtasks', 'owner')
