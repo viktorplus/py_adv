@@ -2,10 +2,10 @@ from rest_framework import generics, status
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from rest_framework_simplejwt.views import TokenBlacklistView, TokenObtainPairView, TokenRefreshView
 
 from .serializers import RegisterSerializer
-from .tokens import REFRESH_COOKIE, set_auth_cookies
+from .tokens import REFRESH_COOKIE, set_auth_cookies, delete_auth_cookies
 
 
 class RegisterView(generics.CreateAPIView):
@@ -37,4 +37,11 @@ class RefreshView(RefreshTokenMixin, TokenRefreshView):
         tokens = self.validate_refresh(request)
         response = Response(tokens, status=status.HTTP_200_OK)
         set_auth_cookies(response, tokens['access'], tokens.get('refresh'))
+        return response
+
+class LogoutView(RefreshTokenMixin, TokenBlacklistView):
+    def post(self, request, *args, **kwargs):
+        self.validate_refresh(request)
+        response = Response(status=status.HTTP_204_NO_CONTENT)
+        delete_auth_cookies(response)
         return response
