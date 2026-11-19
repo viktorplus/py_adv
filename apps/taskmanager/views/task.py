@@ -15,7 +15,7 @@ from apps.taskmanager.models import Task
 from apps.taskmanager.serializers import TaskCreateSerializer, TaskDetailSerializer
 from apps.taskmanager.views.mixins import BulkCreateMixin
 
-from apps.taskmanager.permissions import IsAdminOrReadOnly
+from apps.taskmanager.permissions import IsOwnerOrReadOnly
 
 
 
@@ -71,7 +71,7 @@ class MyTaskListView(ListAPIView):
         return Task.objects.filter(owner=self.request.user)
 
 class TaskDetailUpdateDeleteView(RetrieveUpdateDestroyAPIView):
-    permission_classes = [IsAuthenticated, IsAdminOrReadOnly]
+    permission_classes = [IsAuthenticated, IsOwnerOrReadOnly]
 
     queryset = Task.objects.all()
     lookup_url_kwarg = 'task_id'

@@ -5,7 +5,7 @@ from apps.taskmanager.models import SubTask
 from apps.taskmanager.serializers import SubTaskCreateSerializer
 from apps.taskmanager.views.mixins import BulkCreateMixin
 from rest_framework.permissions import IsAuthenticated
-from apps.taskmanager.permissions import IsAdminOrReadOnly
+from apps.taskmanager.permissions import IsOwnerOrReadOnly
 
 
 class SubTaskListCreateView(BulkCreateMixin, ListCreateAPIView):
@@ -31,7 +31,7 @@ class SubTaskListCreateView(BulkCreateMixin, ListCreateAPIView):
 
 
 class SubTaskDetailUpdateDeleteView(RetrieveUpdateDestroyAPIView):
-    permission_classes = [IsAuthenticated, IsAdminOrReadOnly]
+    permission_classes = [IsAuthenticated, IsOwnerOrReadOnly]
 
     queryset = SubTask.objects.all()
     serializer_class = SubTaskCreateSerializer
